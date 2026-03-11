@@ -56,6 +56,15 @@ impl SpinRwLock {
         Self::INIT
     }
 
+    /// Reset the lock to the unlocked state.
+    ///
+    /// # Safety
+    /// The caller must ensure no other thread is currently accessing this lock
+    /// (holding guards or attempting to acquire).
+    pub unsafe fn reset(&self) {
+        self.state.store(0, Ordering::Release);
+    }
+
     pub fn read(&self) -> ReadGuard<'_> {
         self._read();
         ReadGuard { lock: self }
@@ -854,5 +863,35 @@ mod tests {
         let wg = data.write();
         assert!(data.try_read().is_none());
         drop(wg);
+    }
+
+    // --- reset ---
+
+    #[test]
+    fn reset_unlocks_after_write() {
+        let lock = SpinRwLock::new();
+        let _wg = lock.write();
+        // Simulate a crash: forget the guard so unlock_write never runs.
+        core::mem::forget(_wg);
+        // Lock is now stuck in writer-held state.
+        assert!(lock.try_write().is_none());
+        assert!(lock.try_read().is_none());
+        // SAFETY: no other threads are accessing this lock.
+        unsafe { lock.reset() };
+        // Lock is usable again.
+        assert!(lock.try_read().is_some());
+        assert!(lock.try_write().is_some());
+    }
+
+    #[test]
+    fn reset_unlocks_after_read() {
+        let lock = SpinRwLock::new();
+        let _rg = lock.read();
+        core::mem::forget(_rg);
+        // Lock is stuck with a reader.
+        assert!(lock.try_write().is_none());
+        // SAFETY: no other threads are accessing this lock.
+        unsafe { lock.reset() };
+        assert!(lock.try_write().is_some());
     }
 }

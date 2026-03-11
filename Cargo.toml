@@ -1,6 +1,6 @@
 [package]
 name = "intrusivelock"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 description = "Intrusive locks for Rust — locks that live inside the memory region they protect"
 license = "Apache-2.0"
