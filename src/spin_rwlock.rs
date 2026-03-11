@@ -1,4 +1,4 @@
-use std::{
+use core::{
     cell::UnsafeCell,
     ops::{Deref, DerefMut},
     sync::atomic::{AtomicU64, Ordering},
@@ -33,11 +33,14 @@ impl Backoff {
     fn spin(&mut self) {
         if self.spins < 200 {
             // Phase 1: busy-spin for the first 200 attempts.
-            std::hint::spin_loop();
+            core::hint::spin_loop();
             self.spins += 1;
         } else {
             // Phase 2: yield then do 10 more spins before yielding again.
+            #[cfg(feature = "std")]
             std::thread::yield_now();
+            #[cfg(not(feature = "std"))]
+            core::hint::spin_loop();
             self.spins = 190;
         }
     }
