@@ -2,6 +2,11 @@
 name = "intrusivelock"
 version = "0.1.0"
 edition = "2024"
+description = "Intrusive locks for Rust — locks that live inside the memory region they protect"
+license = "Apache-2.0"
+repository = "https://github.com/sweet-security/intrusivelock"
+keywords = ["lock", "spinlock", "rwlock", "intrusive", "no_std"]
+categories = ["concurrency", "no-std"]
 
 [features]
 default = ["std"]
